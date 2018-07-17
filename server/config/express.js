@@ -17,12 +17,24 @@ const io = require('socket.io')(server);
 const sockets = [];
 
 io.on('connection', (socket) => {
-  socket.join('join', (respond) => {
-    console.log('hola');
+  sockets.push(socket.id);
+
+  socket.on('join', (room) => {
+    const clients = io.sockets.adapter.rooms[room];
+    const numClients = ( typeof clients !== 'undefined') ? Object.keys(clients).length : 0;
+    if (numClients === 0) {
+      socket.join(room);
+    } else if (numClients === 1) {
+      socket.join(room);
+      socket.emit('ready', room);
+      socket.broadcast.emit('ready', room);
+    }
   });
+
+
   socket.on('disconnect', () => {
     console.log('user disconnected')
-  })
+  });
 
   socket.emit('add-users', {
     users: sockets
@@ -33,6 +45,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('make-offer', function(data) {
+    console.log('made', data);
     socket.to(data.to).emit('offer-made', {
       offer: data.offer,
       socket: socket.id
@@ -40,7 +53,8 @@ io.on('connection', (socket) => {
   });
 
   socket.on('make-answer', function(data) {
-    socket.to(data.to).emit('answer-made', {
+    console.log(data);
+    socket.broadcast.emit('answer-made', {
       socket: socket.id,
       answer: data.answer
     });
@@ -50,8 +64,6 @@ io.on('connection', (socket) => {
     sockets.splice(sockets.indexOf(socket.id), 1);
     io.emit('remove-user', socket.id);
   });
-
-  sockets.push(socket.id);
 
 });
 

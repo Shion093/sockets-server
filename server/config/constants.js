@@ -1,6 +1,7 @@
 const path = require('path') ;
 
 require('dotenv-safe').load({
+  allowEmptyValues : true,
   path   : path.join(__dirname, '../../.env'),
   sample : path.join(__dirname, '../../.env.example'),
 });
