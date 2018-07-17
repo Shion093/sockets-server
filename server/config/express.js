@@ -19,16 +19,16 @@ const sockets = [];
 io.on('connection', (socket) => {
   sockets.push(socket.id);
 
+
+
   socket.on('join', (room) => {
+    console.log(room);
+    socket.join(room);
     const clients = io.sockets.adapter.rooms[room];
-    const numClients = ( typeof clients !== 'undefined') ? Object.keys(clients).length : 0;
-    if (numClients === 0) {
-      socket.join(room);
-    } else if (numClients === 1) {
-      socket.join(room);
-      socket.emit('ready', room);
-      socket.broadcast.emit('ready', room);
-    }
+    console.log(clients);
+    socket.emit('added', {
+      clients : Object.keys(clients.sockets)
+    })
   });
 
 
