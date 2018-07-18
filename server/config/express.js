@@ -15,20 +15,25 @@ const server = require('http').Server(app);
 const io = require('socket.io')(server);
 
 const sockets = [];
+let host = '';
 
 io.on('connection', (socket) => {
+
   sockets.push(socket.id);
-
-
 
   socket.on('join', (room) => {
     console.log(room);
-    socket.join(room);
-    const clients = io.sockets.adapter.rooms[room];
+    socket.join(room.room);
+    const clients = io.sockets.adapter.rooms[room.room];
     console.log(clients);
-    socket.emit('added', {
+
+    if (room.isHost) {
+      host = socket.id;
+    }
+    io.emit('added', {
       clients : Object.keys(clients.sockets)
-    })
+    });
+    io.to(socket.id).emit('me', { me : socket.id, host })
   });
 
 
@@ -52,9 +57,17 @@ io.on('connection', (socket) => {
     });
   });
 
+  socket.on('new-candidate', function(data) {
+    console.log('made', data);
+    io.to(data.to).emit('candidate', {
+      candidate: data.candidate,
+      socket: socket.id
+    });
+  });
+
   socket.on('make-answer', function(data) {
     console.log(data);
-    socket.broadcast.emit('answer-made', {
+    io.to(data.to).emit('answer-made', {
       socket: socket.id,
       answer: data.answer
     });
